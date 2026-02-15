@@ -91,7 +91,7 @@ class GameLogic
 
 public:
 
-	GameLogic() : board(3), tokenCount(0)
+	GameLogic() : tokenCount(0)
 	{
 		for (int i = 0; i < MAX_POINTS; i++)
 			for (int j = 0; j < MAX_POINTS; j++)

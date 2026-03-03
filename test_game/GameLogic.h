@@ -14,7 +14,9 @@ class GameLogic
 
 	static const int MAX_TOKENS = 60;
 	TriangCenter tokens[MAX_TOKENS];
-	int tokenCount;
+	int totalTokens;
+	int tokenCount1;
+	int tokenCount2;
 
 	bool connections[MAX_POINTS][MAX_POINTS];
 
@@ -32,10 +34,17 @@ class GameLogic
 		//ближайшие соседи (q-1,r) (q-1,r+1) (q,r-1) (q,r+1) (q+1,r-1) (q+1,r)
 		//отдаленные соседи по прямой 
 		bool flag = true;
-		int dx = abs(p1.q - p2.q);
-		int dz = abs(p1.r - p2.r);
-		int dy = abs((-p1.q - p1.r) - (-p2.q - p2.r));
-		if ((distance(p1, p2) > 3) || (distance(p1, p2) >= 2) && !(dx == 0 || dy == 0 || dz == 0))
+		int dq = abs(p1.q - p2.q);
+		int dr = abs(p1.r - p2.r);
+		int ds = abs((-p1.q - p1.r) - (-p2.q - p2.r));
+		int dist = std::max({ dq, dr, ds });
+
+		if (dist < 1 || dist > 3)
+		{
+			std::cout << "Неверная длина линии!\n";
+			flag = false;
+		}
+		if (dq != 0 && dr != 0 && ds != 0)
 		{
 			std::cout << "Неверный ход!\n";
 			flag = false;
@@ -56,6 +65,7 @@ class GameLogic
 	bool hasToken(int a, int b, int c)
 	{
 		bool isEqual = false;
+		int tokenCount = tokenCount1 + tokenCount2;
 		for (int i = 0; i < tokenCount; i++)
 		{
 			if (tokens[i].active)
@@ -66,41 +76,88 @@ class GameLogic
 		return isEqual;
 	}
 
-	void createTriangCenter(int a, int b, int c)
+	bool createTriangCenter(int a, int b, int c, bool toggle)
 	{
-		if (tokenCount >= MAX_TOKENS)
-			return;
+		bool flag = true;
+		if (totalTokens >= MAX_TOKENS) 
+			flag = false;
 
 		int temp[3] = { a, b, c };
 		std::sort(temp, temp + 3);
 
-		if (hasToken(temp[0], temp[1], temp[2]))
-			return;
-		GameBoard::Point& p1 = board.getPoint(a);
-		GameBoard::Point& p2 = board.getPoint(b);
-		GameBoard::Point& p3 = board.getPoint(c);
+		if (hasToken(temp[0], temp[1], temp[2])) 
+			flag = false;
 
-		TriangCenter& token = tokens[tokenCount++];
-		token.a = temp[0];
-		token.b = temp[1];
-		token.c = temp[2];
-		token.active = 1;
+		tokens[totalTokens].a = temp[0];
+		tokens[totalTokens].b = temp[1];
+		tokens[totalTokens].c = temp[2];
+		tokens[totalTokens].active = true;
 
-		calculateTriangleCenter(p1, p2, p3, token.q, token.r);
+		if (toggle)
+			tokenCount1++;
+		else
+			tokenCount2++;
+
+		totalTokens++; 
+		return flag;
+	}
+	
+	void intermediatePoints(int index1, int index2, bool toggle)
+	{
+		GameBoard::Point p1 = board.getPoint(index1);
+		GameBoard::Point p2 = board.getPoint(index2);
+		int dq = (p2.q > p1.q) ? 1 : (p2.q < p1.q ? -1 : 0);
+		int dr = (p2.r > p1.r) ? 1 : (p2.r < p1.r ? -1 : 0);
+
+		int curQ = p1.q;
+		int curR = p1.r;
+		int prevIdx = index1;
+
+		while (curQ != p2.q || curR != p2.r)
+		{
+			curQ += dq;
+			curR += dr;
+			int curIdx = board.getPointCoord(curQ, curR);
+			if (curIdx != -1)
+			{
+				connections[prevIdx][curIdx] = 1;
+				connections[curIdx][prevIdx] = 1;
+				if (curIdx != index2)
+					board.getPoint(curIdx).usageCounter++;
+
+				for (int k = 0; k < MAX_POINTS; k++)
+				
+					if (connections[prevIdx][k] && connections[curIdx][k])
+						if (distance(board.getPoint(prevIdx), board.getPoint(curIdx)) == 1 &&
+							distance(board.getPoint(prevIdx), board.getPoint(k)) == 1 &&
+							distance(board.getPoint(curIdx), board.getPoint(k)) == 1)
+							if (createTriangCenter(prevIdx, curIdx, k, toggle))
+							{
+								if (toggle)
+									std::cout << "Фишки игрока 1: " << tokenCount1 << '\n';
+								else
+									std::cout << "Фишки игрока 2: " << tokenCount2 << '\n';
+							}
+			}
+			prevIdx = curIdx;
+		}
 	}
 
 public:
 
-	GameLogic() : tokenCount(0)
+	GameLogic() : totalTokens(0), tokenCount1(0), tokenCount2(0)
 	{
 		for (int i = 0; i < MAX_POINTS; i++)
 			for (int j = 0; j < MAX_POINTS; j++)
 				connections[i][j] = 0;
 	}
-	void game(int index1, int index2)
+	void game(int index1, int index2, bool toggle)
 	{
-		if ((index1 < 0 || index1 >= MAX_POINTS) || (index2 < 0 || index2 >= MAX_POINTS))
+		if ((index1 < 0 || index1 > MAX_POINTS - 1) || (index2 < 0 || index2 > MAX_POINTS - 1))
+		{
+			std::cout << "Такой точки нет\n";
 			return;
+		}
 		GameBoard::Point& p1 = board.getPoint(index1);
 		GameBoard::Point& p2 = board.getPoint(index2);
 		if (!connections[index1][index2] && p1.usageCounter != 4 && p2.usageCounter != 4)
@@ -110,22 +167,7 @@ public:
 				connections[index2][index1] = 1;
 				p1.usageCounter++;
 				p2.usageCounter++;
+				intermediatePoints(index1, index2, toggle);
 			}
-
-		for (int k = 0; k < MAX_POINTS; k++)
-		{
-			if (connections[index1][k] && connections[index2][k])
-				if (distance(p1, p2) == 1 && distance(p1, board.getPoint(k)) == 1 && distance(p2, board.getPoint(k)) == 1)
-				{
-					int oldCount = tokenCount;
-					createTriangCenter(index1, index2, k);
-
-					if (tokenCount > oldCount)
-					{
-						std::cout << "Фишек на поле: " << tokenCount << '\n';
-					}
-				}
-				
-		}
 	}
 };

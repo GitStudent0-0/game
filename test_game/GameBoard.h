@@ -18,23 +18,28 @@ private:
 
 public:
 	using Point = HexPoint;
+	const Point& getPoint(int index) const
+	{
+		if (index >= 0 && index < MAX_POINTS)
+			return points[index];
+	}
 	Point& getPoint(int index)
 	{
 		return points[index];
 	}
-	Point& getPointCoord(int q, int r)
+	int getPointCoord(int q, int r)
 	{
 		int idx = coordToIndex[q + boardSize][r + boardSize];
 		if (idx == -1)
-			cout << "Точка не найдена\n";
-		return points[idx];
+			std::cout << "Точка не найдена\n";
+		return idx;
 	}
 	GameBoard()
 	{
 		int n = boardSize;
 		int countPoint = 0;
-		for (int i = 0; i <= MAX_POINTS; i++)
-			for (int j = 0; j <= MAX_POINTS; j++)
+		for (int i = 0; i < MAX_POINTS; i++)
+			for (int j = 0; j < MAX_POINTS; j++)
 				coordToIndex[i][j] = -1;
 		for (int q = -n; q <= n; q++) 
 			for (int r = -n; r <= n; r++) 

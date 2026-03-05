@@ -11,7 +11,7 @@ int main()
 	setlocale(LC_ALL, "RUS");
 	sf::ContextSettings settings;
 	settings.antiAliasingLevel = 8;
-	auto window = sf::RenderWindow(sf::VideoMode({ 1200, 800 }), "Window", sf::State::Windowed, settings);
+	auto window = RenderWindow(VideoMode({ 1200, 800 }), "Window", State::Windowed, settings);
 	GameBoard board;
 	BoardRenderer renderer;
 	renderer.init(board, 70.f);
@@ -19,11 +19,25 @@ int main()
 	{
 		while (const std::optional event = window.pollEvent()) 
 		{
-			if (event->is<sf::Event::Closed>()) 
+			if (event->is<Event::Closed>()) 
 				window.close();
-			
+			if (const auto* mouseClick = event->getIf<Event::MouseButtonPressed>())
+			{
+				if (mouseClick->button == Mouse::Button::Left)
+				{
+					Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
+					int idx = renderer.getPointByPosition(mousePos);
+					if (idx != -1)
+					{
+						cout << idx << '\n';
+						renderer.colorChange(idx);
+					}
+					else
+						cout << "мимо \n";
+				}
+			}
 		}
-		window.clear(sf::Color(100, 149, 237));
+		window.clear(Color(100, 149, 237));
 		renderer.draw(window);
 		window.display();
 	}

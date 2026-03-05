@@ -1,8 +1,10 @@
 #pragma once
 #include "GameBoard.h"
 #include <SFML/Graphics.hpp>
+using namespace sf;
 class BoardRenderer 
 {
+    CircleShape visualPoints[MAX_POINTS];
 public:
     void init(const GameBoard& board, float radius) 
     {
@@ -14,17 +16,31 @@ public:
             float x = radius * sqrt(3.f) * (board.getPoint(i).q + board.getPoint(i).r / 2.f);
             float y = radius * 1.5f * board.getPoint(i).r;
             visualPoints[i].setPosition({ 600.f + x, 400.f + y });
-            visualPoints[i].setFillColor(sf::Color::White);
+            visualPoints[i].setFillColor(Color::White);
         }
     }
 
-    void draw(sf::RenderWindow& window)
+    void draw(RenderWindow& window)
     {
         for (auto& shape : visualPoints) 
             window.draw(shape);  
     }
 
-private:
-    sf::CircleShape visualPoints[MAX_POINTS];
-    int activePointsCount = 0;
+    int getPointByPosition(Vector2f mousePos)
+    {
+        for (int i = 0; i < MAX_POINTS; i++)
+        {
+            Vector2f pos = visualPoints[i].getPosition();
+            float radius = visualPoints[i].getRadius();
+            float dx = mousePos.x - pos.x;
+            float dy = mousePos.y - pos.y;
+            if ((dx * dx + dy * dy) <= (radius * radius))
+                return i;
+        }
+        return -1;
+    }
+    void colorChange(int index)
+    {
+        visualPoints[index].setFillColor(Color::Magenta);
+    }
 };

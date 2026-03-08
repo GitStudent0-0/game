@@ -151,23 +151,31 @@ public:
 			for (int j = 0; j < MAX_POINTS; j++)
 				connections[i][j] = 0;
 	}
-	void game(int index1, int index2, bool toggle)
+
+	bool game(int index1, int index2, bool toggle)
 	{
-		if ((index1 < 0 || index1 > MAX_POINTS - 1) || (index2 < 0 || index2 > MAX_POINTS - 1))
+		bool moveIsMade = false;
+
+		if ((index1 >= 0 && index1 < MAX_POINTS) && (index2 >= 0 && index2 < MAX_POINTS))
 		{
-			std::cout << "Такой точки нет\n";
-			return;
-		}
-		GameBoard::Point& p1 = board.getPoint(index1);
-		GameBoard::Point& p2 = board.getPoint(index2);
-		if (!connections[index1][index2] && p1.usageCounter != 4 && p2.usageCounter != 4)
-			if (isValidityStep(p1, p2))
+			GameBoard::Point& p1 = board.getPoint(index1);
+			GameBoard::Point& p2 = board.getPoint(index2);
+
+			if (!connections[index1][index2] && p1.usageCounter < 4 && p2.usageCounter < 4)
 			{
-				connections[index1][index2] = 1;
-				connections[index2][index1] = 1;
-				p1.usageCounter++;
-				p2.usageCounter++;
-				intermediatePoints(index1, index2, toggle);
+				if (isValidityStep(p1, p2))
+				{
+					connections[index1][index2] = 1;
+					connections[index2][index1] = 1;
+					p1.usageCounter++;
+					p2.usageCounter++;
+					intermediatePoints(index1, index2, toggle);
+					moveIsMade = true;
+				}
 			}
+		}
+		else
+			std::cout << "Такой точки нет \n";
+		return moveIsMade;
 	}
 };

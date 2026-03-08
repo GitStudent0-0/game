@@ -13,8 +13,12 @@ int main()
 	settings.antiAliasingLevel = 8;
 	auto window = RenderWindow(VideoMode({ 1200, 800 }), "Window", State::Windowed, settings);
 	GameBoard board;
+	GameLogic round;
 	BoardRenderer renderer;
 	renderer.init(board, 70.f);
+	bool toggle = true;
+	int firstPointIdx = -1;
+	std::vector<RectangleShape> linesToDraw;
 	while (window.isOpen()) 
 	{
 		while (const std::optional event = window.pollEvent()) 
@@ -26,23 +30,39 @@ int main()
 				if (mouseClick->button == Mouse::Button::Left)
 				{
 					Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
-					int idx = renderer.getPointByPosition(mousePos);
-					if (idx != -1)
+					int  clickPointIdx= renderer.getPointByPosition(mousePos);
+
+					if (clickPointIdx != -1)
 					{
-						cout << idx << '\n';
-						renderer.colorChange(idx);
-					}
+						if (firstPointIdx == -1)
+							firstPointIdx = clickPointIdx;
+						else if (firstPointIdx == clickPointIdx)
+							firstPointIdx = -1;
+						else
+						{
+							if (round.game(firstPointIdx, clickPointIdx, toggle))
+							{
+								linesToDraw.push_back(renderer.drawLine(window, firstPointIdx, clickPointIdx, 10.f, Color::Magenta));
+								toggle = !toggle;
+							}
+							else
+								cout << "Неверный ход \n";
+							firstPointIdx = -1;
+						}
+					}					
 					else
 						cout << "мимо \n";
 				}
 			}
 		}
 		window.clear(Color(100, 149, 237));
-		renderer.draw(window);
+		for (const auto& line : linesToDraw)
+			window.draw(line);
+		renderer.drawPoint(window);
 		window.display();
 	}
-	GameLogic round;
-	cout << "Введите индексы двух точек для соединения (от 0 до 36)\n";
+	
+	/*cout << "Введите индексы двух точек для соединения (от 0 до 36)\n";
 	cout << "Для выхода введите -1\n";
 	int p1, p2;
 	bool toggle = true;
@@ -60,7 +80,7 @@ int main()
 		round.game(p1, p2, toggle);
 
 		toggle = !toggle;
-	}
+	}*/
 	
 
 	return 0;

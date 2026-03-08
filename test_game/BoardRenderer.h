@@ -1,6 +1,7 @@
 #pragma once
 #include "GameBoard.h"
 #include <SFML/Graphics.hpp>
+#include <cmath>
 using namespace sf;
 class BoardRenderer 
 {
@@ -20,11 +21,26 @@ public:
         }
     }
 
-    void draw(RenderWindow& window)
+    void drawPoint(RenderWindow& window)
     {
         for (auto& shape : visualPoints) 
             window.draw(shape);  
     }
+
+    RectangleShape drawLine(RenderWindow& window, int idx1, int idx2, float thickness, Color color)
+    {
+        Vector2f p1 = visualPoints[idx1].getPosition();
+        Vector2f p2 = visualPoints[idx2].getPosition();
+        Vector2f direction = p2 - p1;
+        float length = sqrt(direction.x * direction.x + direction.y * direction.y);
+        float angleRad = atan2(direction.y, direction.x);
+        RectangleShape line(sf::Vector2f(length, thickness));
+        line.setFillColor(color);
+        line.setPosition(p1);
+        line.setRotation(radians(angleRad));
+        return line;
+    }
+
 
     int getPointByPosition(Vector2f mousePos)
     {

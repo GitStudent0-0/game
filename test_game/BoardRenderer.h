@@ -17,7 +17,7 @@ public:
             float x = radius * sqrt(3.f) * (board.getPoint(i).q + board.getPoint(i).r / 2.f);
             float y = radius * 1.5f * board.getPoint(i).r;
             visualPoints[i].setPosition({ 600.f + x, 400.f + y });
-            visualPoints[i].setFillColor(Color::White);
+            visualPoints[i].setFillColor(Color::Color(13, 89, 26));
         }
     }
 

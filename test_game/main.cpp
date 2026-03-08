@@ -12,10 +12,11 @@ int main()
 	sf::ContextSettings settings;
 	settings.antiAliasingLevel = 8;
 	auto window = RenderWindow(VideoMode({ 1200, 800 }), "Window", State::Windowed, settings);
+	window.setFramerateLimit(60);
 	GameBoard board;
-	GameLogic round;
+	GameLogic round(board);
 	BoardRenderer renderer;
-	renderer.init(board, 70.f);
+	renderer.init(board, 80.f);
 	bool toggle = true;
 	int firstPointIdx = -1;
 	std::vector<RectangleShape> linesToDraw;
@@ -42,7 +43,7 @@ int main()
 						{
 							if (round.game(firstPointIdx, clickPointIdx, toggle))
 							{
-								linesToDraw.push_back(renderer.drawLine(window, firstPointIdx, clickPointIdx, 10.f, Color::Magenta));
+								linesToDraw.push_back(renderer.drawLine(window, firstPointIdx, clickPointIdx, 10.f, Color::Color(135, 163, 98)));
 								toggle = !toggle;
 							}
 							else
@@ -55,7 +56,7 @@ int main()
 				}
 			}
 		}
-		window.clear(Color(100, 149, 237));
+		window.clear(Color(215, 241, 247));
 		for (const auto& line : linesToDraw)
 			window.draw(line);
 		renderer.drawPoint(window);

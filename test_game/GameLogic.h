@@ -4,7 +4,7 @@
 
 class GameLogic
 {
-	GameBoard board;
+	GameBoard& board;
 	struct TriangCenter 
 	{
 		int a, b, c;   // индексы точек из массива points[]
@@ -104,14 +104,16 @@ class GameLogic
 	
 	void intermediatePoints(int index1, int index2, bool toggle)
 	{
-		GameBoard::Point p1 = board.getPoint(index1);
-		GameBoard::Point p2 = board.getPoint(index2);
+		GameBoard::Point& p1 = board.getPoint(index1);
+		GameBoard::Point& p2 = board.getPoint(index2);
 		int dq = (p2.q > p1.q) ? 1 : (p2.q < p1.q ? -1 : 0);
 		int dr = (p2.r > p1.r) ? 1 : (p2.r < p1.r ? -1 : 0);
 
 		int curQ = p1.q;
 		int curR = p1.r;
 		int prevIdx = index1;
+
+		p1.usageCounter++;
 
 		while (curQ != p2.q || curR != p2.r)
 		{
@@ -122,8 +124,7 @@ class GameLogic
 			{
 				connections[prevIdx][curIdx] = 1;
 				connections[curIdx][prevIdx] = 1;
-				if (curIdx != index2)
-					board.getPoint(curIdx).usageCounter++;
+				board.getPoint(curIdx).usageCounter++;
 
 				for (int k = 0; k < MAX_POINTS; k++)
 				
@@ -143,9 +144,45 @@ class GameLogic
 		}
 	}
 
+	bool checkInterPoints(int index1, int index2)
+	{
+		bool flag = true;
+		GameBoard::Point& p1 = board.getPoint(index1);
+		GameBoard::Point& p2 = board.getPoint(index2);
+
+		int dq = (p2.q > p1.q) ? 1 : (p2.q < p1.q ? -1 : 0);
+		int dr = (p2.r > p1.r) ? 1 : (p2.r < p1.r ? -1 : 0);
+
+		int curQ = p1.q;
+		int curR = p1.r;
+		int prevIdx = index1;
+
+		if (p1.usageCounter >= 4)
+			flag = false;
+
+		while (curQ != p2.q || curR != p2.r)
+		{
+			curQ += dq;
+			curR += dr;
+			int curIdx = board.getPointCoord(curQ, curR);
+
+			if (curIdx == -1)
+				flag = false;
+
+			if (board.getPoint(curIdx).usageCounter >= 4)
+			{
+				std::cout << "Точка на пути переполнена\n";
+				flag = false;
+				break;
+			}
+		}
+		return flag;
+	}
+
+
 public:
 
-	GameLogic() : totalTokens(0), tokenCount1(0), tokenCount2(0)
+	GameLogic(GameBoard& b) : board(b), totalTokens(0), tokenCount1(0), tokenCount2(0)
 	{
 		for (int i = 0; i < MAX_POINTS; i++)
 			for (int j = 0; j < MAX_POINTS; j++)
@@ -161,17 +198,11 @@ public:
 			GameBoard::Point& p1 = board.getPoint(index1);
 			GameBoard::Point& p2 = board.getPoint(index2);
 
-			if (!connections[index1][index2] && p1.usageCounter < 4 && p2.usageCounter < 4)
+			if (!connections[index1][index2] && isValidityStep(p1, p2) && checkInterPoints(index1, index2))
 			{
-				if (isValidityStep(p1, p2))
-				{
-					connections[index1][index2] = 1;
-					connections[index2][index1] = 1;
-					p1.usageCounter++;
-					p2.usageCounter++;
-					intermediatePoints(index1, index2, toggle);
-					moveIsMade = true;
-				}
+				intermediatePoints(index1, index2, toggle);
+				moveIsMade = true;
+				
 			}
 		}
 		else

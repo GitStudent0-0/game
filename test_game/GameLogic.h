@@ -4,6 +4,10 @@
 
 class GameLogic
 {
+public:
+	static const int MAX_TOKENS = 60;
+private:
+	friend class BoardRenderer;
 	GameBoard& board;
 	struct TriangCenter 
 	{
@@ -12,13 +16,13 @@ class GameLogic
 		bool active;
 	};
 
-	static const int MAX_TOKENS = 60;
-	TriangCenter tokens[MAX_TOKENS];
 	int totalTokens;
 	int tokenCount1;
 	int tokenCount2;
+	TriangCenter tokens[MAX_TOKENS];
 
-	bool connections[MAX_POINTS][MAX_POINTS];
+	bool connections[GameBoard::MAX_POINTS][GameBoard::MAX_POINTS];
+
 
 	int distance(GameBoard::Point& p1, GameBoard::Point& p2)
 	{
@@ -91,6 +95,10 @@ class GameLogic
 		tokens[totalTokens].a = temp[0];
 		tokens[totalTokens].b = temp[1];
 		tokens[totalTokens].c = temp[2];
+
+		calculateTriangleCenter(board.getPoint(a), board.getPoint(b), board.getPoint(c),
+			tokens[totalTokens].q, tokens[totalTokens].r);
+
 		tokens[totalTokens].active = true;
 
 		if (toggle)
@@ -126,7 +134,7 @@ class GameLogic
 				connections[curIdx][prevIdx] = 1;
 				board.getPoint(curIdx).usageCounter++;
 
-				for (int k = 0; k < MAX_POINTS; k++)
+				for (int k = 0; k < GameBoard::MAX_POINTS; k++)
 				
 					if (connections[prevIdx][k] && connections[curIdx][k])
 						if (distance(board.getPoint(prevIdx), board.getPoint(curIdx)) == 1 &&
@@ -169,7 +177,7 @@ class GameLogic
 			if (curIdx == -1)
 				flag = false;
 
-			if (board.getPoint(curIdx).usageCounter >= 4)
+			if (board.getPoint(curIdx).usageCounter >= 5)
 			{
 				std::cout << "Точка на пути переполнена\n";
 				flag = false;
@@ -182,10 +190,15 @@ class GameLogic
 
 public:
 
+	int getTotalTokens() const
+	{
+		return totalTokens;
+	}
+
 	GameLogic(GameBoard& b) : board(b), totalTokens(0), tokenCount1(0), tokenCount2(0)
 	{
-		for (int i = 0; i < MAX_POINTS; i++)
-			for (int j = 0; j < MAX_POINTS; j++)
+		for (int i = 0; i < GameBoard::MAX_POINTS; i++)
+			for (int j = 0; j < GameBoard::MAX_POINTS; j++)
 				connections[i][j] = 0;
 	}
 
@@ -193,7 +206,7 @@ public:
 	{
 		bool moveIsMade = false;
 
-		if ((index1 >= 0 && index1 < MAX_POINTS) && (index2 >= 0 && index2 < MAX_POINTS))
+		if ((index1 >= 0 && index1 < GameBoard::MAX_POINTS) && (index2 >= 0 && index2 < GameBoard::MAX_POINTS))
 		{
 			GameBoard::Point& p1 = board.getPoint(index1);
 			GameBoard::Point& p2 = board.getPoint(index2);

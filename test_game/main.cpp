@@ -13,13 +13,17 @@ int main()
 	settings.antiAliasingLevel = 8;
 	auto window = RenderWindow(VideoMode({ 1200, 800 }), "Window", State::Windowed, settings);
 	window.setFramerateLimit(60);
+
 	GameBoard board;
 	GameLogic round(board);
 	BoardRenderer renderer;
 	renderer.init(board, 80.f);
+
 	bool toggle = true;
 	int firstPointIdx = -1;
+
 	std::vector<RectangleShape> linesToDraw;
+	std::vector<CircleShape> tokensToDraw;
 	while (window.isOpen()) 
 	{
 		while (const std::optional event = window.pollEvent()) 
@@ -32,18 +36,26 @@ int main()
 				{
 					Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
 					int  clickPointIdx= renderer.getPointByPosition(mousePos);
-
+					if (toggle)
+						cout << "Игрок 1: ";
+					else
+						cout << "Игрок 2: ";
 					if (clickPointIdx != -1)
 					{
+						cout << "Выбрана точка: " << clickPointIdx << '\n';
 						if (firstPointIdx == -1)
 							firstPointIdx = clickPointIdx;
 						else if (firstPointIdx == clickPointIdx)
 							firstPointIdx = -1;
 						else
 						{
+							int tokensBefore = round.getTotalTokens();
 							if (round.game(firstPointIdx, clickPointIdx, toggle))
 							{
-								linesToDraw.push_back(renderer.drawLine(window, firstPointIdx, clickPointIdx, 10.f, Color::Color(135, 163, 98)));
+								linesToDraw.push_back(renderer.drawLine(firstPointIdx, clickPointIdx));
+								int tokensAfter = round.getTotalTokens();
+								for (int i = tokensBefore; i < tokensAfter; i++)
+									tokensToDraw.push_back(renderer.drawTokens(round, i, toggle, 80.f));		
 								toggle = !toggle;
 							}
 							else
@@ -59,6 +71,8 @@ int main()
 		window.clear(Color(215, 241, 247));
 		for (const auto& line : linesToDraw)
 			window.draw(line);
+		for (const auto& token : tokensToDraw)
+			window.draw(token);
 		renderer.drawPoint(window);
 		window.display();
 	}

@@ -1,7 +1,7 @@
 #pragma once
 #include<iostream>
 
-static const int MAX_POINTS = 37;
+
 class GameBoard
 {
 public:

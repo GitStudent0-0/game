@@ -6,10 +6,11 @@ class GameLogic
 {
 public:
 	static const int MAX_TOKENS = 60;
+
 private:
 	friend class BoardRenderer;
 	GameBoard& board;
-	struct TriangCenter 
+	struct TriangCenter
 	{
 		int a, b, c;   // индексы точек из массива points[]
 		double q, r;  //координаты центра
@@ -19,6 +20,7 @@ private:
 	int totalTokens;
 	int tokenCount1;
 	int tokenCount2;
+
 	TriangCenter tokens[MAX_TOKENS];
 
 	bool connections[GameBoard::MAX_POINTS][GameBoard::MAX_POINTS];
@@ -56,7 +58,7 @@ private:
 
 		return flag;
 	}
-	
+
 	void calculateTriangleCenter(GameBoard::Point& p1, GameBoard::Point& p2, GameBoard::Point& p3, double& q, double& r)
 	{
 		int x1 = p1.q, z1 = p1.r;
@@ -69,28 +71,23 @@ private:
 	bool hasToken(int a, int b, int c)
 	{
 		bool isEqual = false;
-		int tokenCount = tokenCount1 + tokenCount2;
-		for (int i = 0; i < tokenCount; i++)
+		for (int i = 0; i < totalTokens; i++)
 		{
 			if (tokens[i].active)
 				if (a == tokens[i].a && b == tokens[i].b && c == tokens[i].c)
 					isEqual = true;
-			
+
 		}
 		return isEqual;
 	}
 
 	bool createTriangCenter(int a, int b, int c, bool toggle)
 	{
-		bool flag = true;
-		if (totalTokens >= MAX_TOKENS) 
-			flag = false;
-
 		int temp[3] = { a, b, c };
 		std::sort(temp, temp + 3);
 
-		if (hasToken(temp[0], temp[1], temp[2])) 
-			flag = false;
+		if (hasToken(temp[0], temp[1], temp[2]) || totalTokens >= MAX_TOKENS)
+			return false;
 
 		tokens[totalTokens].a = temp[0];
 		tokens[totalTokens].b = temp[1];
@@ -106,10 +103,11 @@ private:
 		else
 			tokenCount2++;
 
-		totalTokens++; 
-		return flag;
+		totalTokens++;
+
+		return true;
 	}
-	
+
 	void intermediatePoints(int index1, int index2, bool toggle)
 	{
 		GameBoard::Point& p1 = board.getPoint(index1);
@@ -135,7 +133,7 @@ private:
 				board.getPoint(curIdx).usageCounter++;
 
 				for (int k = 0; k < GameBoard::MAX_POINTS; k++)
-				
+
 					if (connections[prevIdx][k] && connections[curIdx][k])
 						if (distance(board.getPoint(prevIdx), board.getPoint(curIdx)) == 1 &&
 							distance(board.getPoint(prevIdx), board.getPoint(k)) == 1 &&
@@ -177,7 +175,7 @@ private:
 			if (curIdx == -1)
 				flag = false;
 
-			if (board.getPoint(curIdx).usageCounter >= 5)
+			if (board.getPoint(curIdx).usageCounter >= 4)
 			{
 				std::cout << "Точка на пути переполнена\n";
 				flag = false;
@@ -193,6 +191,14 @@ public:
 	int getTotalTokens() const
 	{
 		return totalTokens;
+	}
+	int& getTokenCount1()
+	{
+		return tokenCount1;
+	}
+	int& getTokenCount2()
+	{
+		return tokenCount2;
 	}
 
 	GameLogic(GameBoard& b) : board(b), totalTokens(0), tokenCount1(0), tokenCount2(0)
@@ -215,7 +221,7 @@ public:
 			{
 				intermediatePoints(index1, index2, toggle);
 				moveIsMade = true;
-				
+
 			}
 		}
 		else

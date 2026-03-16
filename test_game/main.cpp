@@ -11,19 +11,29 @@ int main()
 	setlocale(LC_ALL, "RUS");
 	sf::ContextSettings settings;
 	settings.antiAliasingLevel = 8;
-	auto window = RenderWindow(VideoMode({ 1200, 800 }), "Window", State::Windowed, settings);
-	window.setFramerateLimit(60);
+	auto window = RenderWindow(VideoMode({ 1400, 900 }), "Window", State::Windowed, settings);
+	window.setFramerateLimit(30);
+	Font font;
+	font.openFromFile("C:/Windows/Fonts/Arial.ttf");
 
 	GameBoard board;
 	GameLogic round(board);
 	BoardRenderer renderer;
-	renderer.init(board, 80.f);
+	renderer.init(board, 90.f);
 
 	bool toggle = true;
 	int firstPointIdx = -1;
 
 	std::vector<RectangleShape> linesToDraw;
 	std::vector<CircleShape> tokensToDraw;
+
+	struct FlashEffect 
+	{
+		int p1 = -1, p2 = -1;
+		Clock timer;
+		bool active = false;
+	} errorFlash;
+
 	while (window.isOpen()) 
 	{
 		while (const std::optional event = window.pollEvent()) 
@@ -55,11 +65,21 @@ int main()
 								linesToDraw.push_back(renderer.drawLine(firstPointIdx, clickPointIdx));
 								int tokensAfter = round.getTotalTokens();
 								for (int i = tokensBefore; i < tokensAfter; i++)
-									tokensToDraw.push_back(renderer.drawTokens(round, i, toggle, 80.f));		
+									tokensToDraw.push_back(renderer.drawTokens(round, i, toggle, 90.f));		
 								toggle = !toggle;
 							}
 							else
+							{
 								cout << "Неверный ход \n";
+								errorFlash.p1 = firstPointIdx;
+								errorFlash.p2 = clickPointIdx;
+								errorFlash.active = true;
+
+								renderer.colorChange(errorFlash.p1, Color(219, 31, 31));
+								renderer.colorChange(errorFlash.p2, Color(219, 31, 31));
+
+								errorFlash.timer.restart();
+							}
 							firstPointIdx = -1;
 						}
 					}					
@@ -68,12 +88,19 @@ int main()
 				}
 			}
 		}
+		if (errorFlash.active && errorFlash.timer.getElapsedTime().asSeconds() > 0.3f) 
+		{
+			renderer.colorChange(errorFlash.p1, Color(13, 89, 26));
+			renderer.colorChange(errorFlash.p2, Color(13, 89, 26));
+			errorFlash.active = false;
+		}
 		window.clear(Color(215, 241, 247));
 		for (const auto& line : linesToDraw)
 			window.draw(line);
 		for (const auto& token : tokensToDraw)
 			window.draw(token);
 		renderer.drawPoint(window);
+		renderer.text(window, round.getTokenCount1(), round.getTokenCount2(), font);
 		window.display();
 	}
 	

@@ -3,8 +3,10 @@
 #include <SFML/Graphics.hpp>
 #include "GameBoard.h"
 #include "BoardRenderer.h"
+#include "Menu.h"
 using std::cout;
 using std::cin;
+enum class AppState { Menu, Game };
 
 int main()
 {
@@ -13,9 +15,10 @@ int main()
 	settings.antiAliasingLevel = 8;
 	auto window = RenderWindow(VideoMode({ 1400, 900 }), "Window", State::Windowed, settings);
 	window.setFramerateLimit(30);
+	AppState curScreen = AppState::Menu;
 	Font font;
 	font.openFromFile("C:/Windows/Fonts/Arial.ttf");
-
+	Menu menu(font);
 	GameBoard board;
 	GameLogic round(board);
 	BoardRenderer renderer;
@@ -45,46 +48,54 @@ int main()
 				if (mouseClick->button == Mouse::Button::Left)
 				{
 					Vector2f mousePos = window.mapPixelToCoords(Mouse::getPosition(window));
-					int  clickPointIdx= renderer.getPointByPosition(mousePos);
-					if (toggle)
-						cout << "Игрок 1: ";
-					else
-						cout << "Игрок 2: ";
-					if (clickPointIdx != -1)
+					if (curScreen == AppState::Menu)
 					{
-						cout << "Выбрана точка: " << clickPointIdx << '\n';
-						if (firstPointIdx == -1)
-							firstPointIdx = clickPointIdx;
-						else if (firstPointIdx == clickPointIdx)
-							firstPointIdx = -1;
+						if (menu.isClicked(mousePos))	
+							curScreen = AppState::Game; 
+					}
+					else if (curScreen == AppState::Game)
+					{
+						int  clickPointIdx = renderer.getPointByPosition(mousePos);
+						if (toggle)
+							cout << "Игрок 1: ";
 						else
+							cout << "Игрок 2: ";
+						if (clickPointIdx != -1)
 						{
-							int tokensBefore = round.getTotalTokens();
-							if (round.game(firstPointIdx, clickPointIdx, toggle))
-							{
-								linesToDraw.push_back(renderer.drawLine(firstPointIdx, clickPointIdx));
-								int tokensAfter = round.getTotalTokens();
-								for (int i = tokensBefore; i < tokensAfter; i++)
-									tokensToDraw.push_back(renderer.drawTokens(round, i, toggle, 90.f));		
-								toggle = !toggle;
-							}
+							cout << "Выбрана точка: " << clickPointIdx << '\n';
+							if (firstPointIdx == -1)
+								firstPointIdx = clickPointIdx;
+							else if (firstPointIdx == clickPointIdx)
+								firstPointIdx = -1;
 							else
 							{
-								cout << "Неверный ход \n";
-								errorFlash.p1 = firstPointIdx;
-								errorFlash.p2 = clickPointIdx;
-								errorFlash.active = true;
+								int tokensBefore = round.getTotalTokens();
+								if (round.game(firstPointIdx, clickPointIdx, toggle))
+								{
+									linesToDraw.push_back(renderer.drawLine(firstPointIdx, clickPointIdx));
+									int tokensAfter = round.getTotalTokens();
+									for (int i = tokensBefore; i < tokensAfter; i++)
+										tokensToDraw.push_back(renderer.drawTokens(round, i, toggle, 90.f));
+									toggle = !toggle;
+								}
+								else
+								{
+									cout << "Неверный ход \n";
+									errorFlash.p1 = firstPointIdx;
+									errorFlash.p2 = clickPointIdx;
+									errorFlash.active = true;
 
-								renderer.colorChange(errorFlash.p1, Color(219, 31, 31));
-								renderer.colorChange(errorFlash.p2, Color(219, 31, 31));
+									renderer.colorChange(errorFlash.p1, Color(219, 31, 31));
+									renderer.colorChange(errorFlash.p2, Color(219, 31, 31));
 
-								errorFlash.timer.restart();
+									errorFlash.timer.restart();
+								}
+								firstPointIdx = -1;
 							}
-							firstPointIdx = -1;
 						}
-					}					
-					else
-						cout << "мимо \n";
+						else
+							cout << "мимо \n";
+					}
 				}
 			}
 		}
@@ -95,12 +106,17 @@ int main()
 			errorFlash.active = false;
 		}
 		window.clear(Color(215, 241, 247));
-		for (const auto& line : linesToDraw)
-			window.draw(line);
-		for (const auto& token : tokensToDraw)
-			window.draw(token);
-		renderer.drawPoint(window);
-		renderer.text(window, round.getTokenCount1(), round.getTokenCount2(), font);
+		if (curScreen == AppState::Menu)
+			menu.draw(window);
+		else if (curScreen == AppState::Game)
+		{
+			for (const auto& line : linesToDraw)
+				window.draw(line);
+			for (const auto& token : tokensToDraw)
+				window.draw(token);
+			renderer.drawPoint(window);
+			renderer.text(window, round.getTokenCount1(), round.getTokenCount2(), font);
+		}
 		window.display();
 	}
 	

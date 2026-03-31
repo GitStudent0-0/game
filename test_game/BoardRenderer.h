@@ -9,6 +9,7 @@ using namespace sf;
 class BoardRenderer 
 {
     CircleShape visualPoints[GameBoard::MAX_POINTS];
+
 public:
     void init(const GameBoard& board, float radius) 
     {
@@ -56,7 +57,7 @@ public:
         token.setPosition({ 700.f + x, 450.f + y });
         
         if (toggle)
-            token.setFillColor(Color(252, 188, 25));
+            token.setFillColor(Color(247, 179, 5));
         else
             token.setFillColor(Color(166, 93, 212));
         
@@ -93,8 +94,8 @@ public:
         CircleShape background1(sizeBG, 6);
         CircleShape background2(sizeBG, 6);
 
-        background1.setFillColor(Color(135, 163, 98));
-        background2.setFillColor(Color(135, 163, 98));
+        background1.setFillColor(Color(255, 255, 255));
+        background2.setFillColor(Color(255, 255, 255));
 
         background1.setOrigin({ sizeBG , sizeBG });
         background2.setOrigin({ sizeBG , sizeBG });

@@ -120,6 +120,7 @@
     <ClInclude Include="BoardRenderer.h" />
     <ClInclude Include="GameBoard.h" />
     <ClInclude Include="GameLogic.h" />
+    <ClInclude Include="Menu.h" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

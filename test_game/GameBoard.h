@@ -11,8 +11,8 @@ private:
 	int coordToIndex[MAX_POINTS][MAX_POINTS];
 	struct HexPoint
 	{
-		int q, r;
-		int usageCounter;
+		int q;
+		int r;
 	};
 	HexPoint points[MAX_POINTS];
 
@@ -48,7 +48,6 @@ public:
 					{
 						points[countPoint].q = q;
 						points[countPoint].r = r;
-						points[countPoint].usageCounter = 0;
 						coordToIndex[q + n][r + n] = countPoint;
 						countPoint++;
 					}

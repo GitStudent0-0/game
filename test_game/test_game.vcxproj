@@ -121,6 +121,7 @@
     <ClInclude Include="GameBoard.h" />
     <ClInclude Include="GameLogic.h" />
     <ClInclude Include="Menu.h" />
+    <ClInclude Include="MinimaxBot.h" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />

@@ -2,7 +2,7 @@
 #include "GameLogic.h"
 #include <random>
 
-class Bot
+class MinimaxBot
 {
   GameLogic& logic;
   bool botPlayer = false;
@@ -21,44 +21,87 @@ class Bot
       return 0;
 
     int tokenVal = play.getTokenCount2() - play.getTokenCount1();
-    int noiseVal = noise(rng);
-    return tokenVal + noiseVal;
+    return tokenVal;
   }
 
-  int minimax(GameLogic& play, int depth, bool curPlayer)
+  int heuristic(const GameLogic& state, const Move& move) 
+  {
+    int cnt = 0;
+    int a = move.a;
+    int b = move.b;
+    for (int k = 0; k < GameBoard::MAX_POINTS; k++) 
+      if (state.getConnections(a, k) && state.getConnections(b, k)) 
+        cnt++;
+    return cnt;
+  }
+
+  void sortMovesByHeuristic(vector<Move>& moves, const GameLogic& state) 
+  {
+    for (size_t i = 0; i < moves.size(); i++)
+    {
+      size_t bestIdx = i;
+      int maxVal = heuristic(state, moves[i]);
+
+      for (size_t j = i + 1; j < moves.size(); j++)
+      {
+        int curVal = heuristic(state, moves[j]);
+        if (curVal > maxVal)
+        {
+          maxVal = curVal;
+          bestIdx = j;
+        }
+      }
+      if (bestIdx != i)
+        std::swap(moves[i], moves[bestIdx]);
+    }
+  }
+
+  int minimax(GameLogic& play, int depth, bool curPlayer, int alpha, int beta)
   {
     if (depth == 0 || play.isGameOver())
       return evaluation(play);
-    vector<Move> moves = play.getAvailableMoves();
-
+    vector<Move> moves;
+    play.getAvailableMoves(moves);
     if (moves.empty())
       return evaluation(play);
-
-    std::shuffle(moves.begin(), moves.end(), rng); 
-
+    sortMovesByHeuristic(moves, play);
     if (curPlayer == botPlayer)
     {
       int bestValue = -inf;
-      for (const auto& move : moves)
+      auto i = moves.begin();
+      while (i != moves.end())
       {
-        GameLogic copy = play;
-        copy.makeMove(move, curPlayer, false);
-        int value = minimax(copy, depth - 1, !curPlayer);
-        if (value > bestValue)
-          bestValue = value;
+        int oldTokens = play.getTotalTokens();
+        if (play.makeMove(*i, curPlayer, false))
+        {
+          int value = minimax(play, depth - 1, !curPlayer, alpha, beta);
+          play.unmakeMove(*i, curPlayer, oldTokens);
+          bestValue = std::max(bestValue, value);
+          alpha = std::max(alpha, bestValue);
+          if (alpha >= beta)
+            break;
+        }
+        i++;
       }
       return bestValue;
     }
     else
     {
       int bestValue = inf;
-      for (const auto& move : moves)
+      auto i = moves.begin();
+      while (i != moves.end())
       {
-        GameLogic copy = play;
-        copy.makeMove(move, curPlayer, false);
-        int value = minimax(copy, depth - 1, !curPlayer);
-        if (value < bestValue)
-          bestValue = value;
+        int oldTokens = play.getTotalTokens();
+        if (play.makeMove(*i, curPlayer, false))
+        {
+          int value = minimax(play, depth - 1, !curPlayer, alpha, beta);
+          play.unmakeMove(*i, curPlayer, oldTokens);
+          bestValue = std::min(bestValue, value);
+          beta = std::min(beta, bestValue);
+          if (alpha >= beta)
+            break;
+        }
+        i++;
       }
       return bestValue;
     }
@@ -66,27 +109,38 @@ class Bot
 
 public:
 
-  Bot(GameLogic& logic, int depth = 3, int range = 0) : logic(logic), maxDepth(depth), rng(std::random_device{}()), noise(-range, range) {}
+  MinimaxBot(GameLogic& logic, int depth = 3, int range = 0) : logic(logic), maxDepth(depth), rng(std::random_device{}()), noise(-range, range) {}
 
   Move choiceMove()
   {
-    vector<Move> moves = logic.getAvailableMoves();
-    if (moves.empty())
-      return { -1, -1 };
-    Move bestMove = moves[0];
-    int bestValue = -inf;
-
-    std::shuffle(moves.begin(), moves.end(), rng);
-
-    for (const auto& move : moves)
+    Move bestMove = { -1, -1 };
+    vector<Move> moves;
+    logic.getAvailableMoves(moves);
+    if (!moves.empty())
     {
-      GameLogic copy = logic;
-      copy.makeMove(move, botPlayer, false);
-      int value = minimax(copy, maxDepth - 1, !botPlayer);
-      if (value > bestValue)
+      bestMove = moves[0];
+      int bestValue = -inf;
+      int currentAlpha = -inf; 
+
+      std::shuffle(moves.begin(), moves.end(), rng);
+      sortMovesByHeuristic(moves, logic);
+      for (const auto& move : moves)
       {
-        bestValue = value;
-        bestMove = move;
+        int oldTokens = logic.getTotalTokens();
+        if (logic.makeMove(move, botPlayer, false))
+        {
+          int value = minimax(logic, maxDepth - 1, !botPlayer, currentAlpha, inf);
+          logic.unmakeMove(move, botPlayer, oldTokens);
+
+          currentAlpha = std::max(currentAlpha, value);
+
+          int noisyValue = value + noise(rng);
+          if (noisyValue > bestValue)
+          {
+            bestValue = noisyValue;
+            bestMove = move;
+          }
+        }
       }
     }
     return bestMove;

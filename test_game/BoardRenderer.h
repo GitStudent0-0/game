@@ -15,17 +15,23 @@ class BoardRenderer
     ConvexShape restartButton;
     void makeRounded(ConvexShape& shape, Vector2f size, float radius)
     {
-      size_t pointsCount = 40;
+      if (radius * 2 > size.x) 
+        radius = size.x / 2;
+      if (radius * 2 > size.y) 
+        radius = size.y / 2;
+      size_t points = 10;
+      size_t pointsCount = points * 4;
       shape.setPointCount(pointsCount);
 
       float x = size.x, y = size.y;
-      for (size_t i = 0; i < pointsCount / 4; i++)
+      float step = (3.14159f / 2.0f) / (points - 1);
+      for (size_t i = 0; i < points; i++)
       {
-        float angle = i * 2 * 3.14159f / pointsCount;
+        float angle = i * step;
         shape.setPoint(i, { x - radius + cos(angle) * radius, radius - sin(angle) * radius });
-        shape.setPoint(i + pointsCount / 4, { radius - sin(angle) * radius, radius - cos(angle) * radius });
-        shape.setPoint(i + pointsCount / 2, { radius - cos(angle) * radius, y - radius + sin(angle) * radius });
-        shape.setPoint(i + 3 * pointsCount / 4, { x - radius + sin(angle) * radius, y - radius + cos(angle) * radius });
+        shape.setPoint(i + points, { radius - sin(angle) * radius, radius - cos(angle) * radius });
+        shape.setPoint(i + points * 2, { radius - cos(angle) * radius, y - radius + sin(angle) * radius });
+        shape.setPoint(i + points * 3, { x - radius + sin(angle) * radius, y - radius + cos(angle) * radius });
       }
     }
     void centerTextOrigin(Text& t)
@@ -140,7 +146,7 @@ public:
 
     void text(RenderWindow& window, int& tokenCount1, int& tokenCount2, Font& font)
     {  
-      float centerX = 750.f;
+      float centerX = 700.f;
       float playersY = 25.f;
       float scoreY = 70.f;
       float gap = 20.f;
@@ -176,8 +182,7 @@ public:
       window.draw(versus);
       window.draw(player2);
 
-      String scoreStr =
-        std::to_wstring(tokenCount1) + L" : " + std::to_wstring(tokenCount2);
+      String scoreStr = std::to_wstring(tokenCount1) + L" : " + std::to_wstring(tokenCount2);
 
       Text score(font, scoreStr, 35);
       score.setFillColor(Color::Black);

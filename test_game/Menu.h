@@ -65,17 +65,23 @@ class Menu
 
   void makeRounded(ConvexShape& shape, Vector2f size, float radius)
   {
-    size_t pointsCount = 40;
+    if (radius * 2 > size.x)
+      radius = size.x / 2;
+    if (radius * 2 > size.y)
+      radius = size.y / 2;
+    size_t points = 10;
+    size_t pointsCount = points * 4;
     shape.setPointCount(pointsCount);
 
     float x = size.x, y = size.y;
-    for (size_t i = 0; i < pointsCount / 4; i++)
+    float step = (3.14159f / 2.0f) / (points - 1);
+    for (size_t i = 0; i < points; i++)
     {
-      float angle = i * 2 * 3.14159f / pointsCount;
+      float angle = i * step;
       shape.setPoint(i, { x - radius + cos(angle) * radius, radius - sin(angle) * radius });
-      shape.setPoint(i + pointsCount / 4, { radius - sin(angle) * radius, radius - cos(angle) * radius });
-      shape.setPoint(i + pointsCount / 2, { radius - cos(angle) * radius, y - radius + sin(angle) * radius });
-      shape.setPoint(i + 3 * pointsCount / 4, { x - radius + sin(angle) * radius, y - radius + cos(angle) * radius });
+      shape.setPoint(i + points, { radius - sin(angle) * radius, radius - cos(angle) * radius });
+      shape.setPoint(i + points * 2, { radius - cos(angle) * radius, y - radius + sin(angle) * radius });
+      shape.setPoint(i + points * 3, { x - radius + sin(angle) * radius, y - radius + cos(angle) * radius });
     }
   }
 
@@ -112,18 +118,20 @@ public:
     endModeLabel(font, L" онец игры", 30),
     p2HumanText(font, L"человек", 25),
     p2BotText(font, L"бот", 25),
-    endTokenText(font, L"кто первый расставит 10 фишек", 25),
+    endTokenText(font, L"кто первым расставит 10 фишек", 25),
     endMovesText(font, L"закончились ходы", 25),
     rulesText(font,
-      L"ѕравила игры дл€ классической версии:\n\n"
-      L"1. »гроки по очереди соедин€ют 4 точки линией, параллельной гран€м пол€.\n\n"
+      L"*ѕравила игры дл€ классической версии:\n\n"
+      L"1. »гроки по очереди соедин€ют две точки линией из 3 отрезков, параллельной\n\n"
+      L"сторонам пол€.\n\n"
       L"2. ≈сли образуетс€ треугольник, в него ставитс€ фишка.\n\n"
-      L"3. »гра заканчиваетс€ по достижении услови€ конца игры.\n\n"
-      L"ѕравила игры дл€ модифицированной версии:\n\n"
-      L"1. »гроки по очереди соедин€ют до 4 точек линией, параллельной гран€м пол€.\n\n"
+      L"3. »гра заканчиваетс€ при выполнении условий завершени€.\n\n"
+      L"*ѕравила игры дл€ модифицированной версии:\n\n"
+      L"1. »гроки по очереди соедин€ют две точки линией от 1 до 3 отрезков, параллельной\n\n"
+      L"сторонам пол€.\n\n"
       L"2. ≈сли образуетс€ треугольник, в него ставитс€ фишка.\n\n"
-      L"3. ≈сли точка используетс€ 4 раза, она бледнеет.\n\n"
-      L"4. »гра заканчиваетс€ по достижении услови€ конца игры.",
+      L"3. ≈сли точка используетс€ 4 раза, она тускнеет.\n\n"
+      L"4. »гра заканчиваетс€ при выполнении условий завершени€.",
       30),
     firstMoveLabel(font, L"ѕервым ходит", 30),
     firstPlayer1Text(font, L"»грок 1", 25),
@@ -213,16 +221,16 @@ public:
     rulesBg.setSize({ 1400.f, 980.f });
     rulesBg.setFillColor(Color(238, 243, 247));
     rulesText.setFillColor(Color::Black);
-    rulesText.setPosition({ 200.f, 100.f });
+    rulesText.setPosition({ 100.f, 50.f });
 
     makeRounded(backButton, { 250.f, 60.f }, 20.f);
     backButton.setFillColor(Color(145, 178, 197));
     backButton.setOutlineThickness(3.f);
     backButton.setOutlineColor(Color::Black);
     backButton.setOrigin({ 125.f, 30.f });
-    backButton.setPosition({ 700.f, 780.f });
+    backButton.setPosition({ 700.f, 850.f });
     backBtnText.setFillColor(Color::Black);
-    backBtnText.setPosition({ 700.f, 780.f });
+    backBtnText.setPosition({ 700.f, 850.f });
     centerTextOrigin(backBtnText);
   }
 
@@ -309,20 +317,20 @@ public:
 
     if (p2HumanRadio.getGlobalBounds().contains(mousePos) || p2HumanText.getGlobalBounds().contains(mousePos))
       p2Type = PlayerType::Human;
-    if (p2BotRadio.getGlobalBounds().contains(mousePos) || p2BotText.getGlobalBounds().contains(mousePos))
+    else if (p2BotRadio.getGlobalBounds().contains(mousePos) || p2BotText.getGlobalBounds().contains(mousePos))
       p2Type = PlayerType::Bot;
 
     if (endTokenRadio.getGlobalBounds().contains(mousePos) || endTokenText.getGlobalBounds().contains(mousePos))
       endMode = GameEndMode::TokenLimit;
-    if (endMovesRadio.getGlobalBounds().contains(mousePos) || endMovesText.getGlobalBounds().contains(mousePos))
+    else if (endMovesRadio.getGlobalBounds().contains(mousePos) || endMovesText.getGlobalBounds().contains(mousePos))
       endMode = GameEndMode::NoMovesLeft;
     if (classicVariantRadio.getGlobalBounds().contains(mousePos) || classicVariantText.getGlobalBounds().contains(mousePos))
       version = GameOption::Classical;
-    if (modifiedVariantRadio.getGlobalBounds().contains(mousePos) || modifiedVariantText.getGlobalBounds().contains(mousePos))
+    else if (modifiedVariantRadio.getGlobalBounds().contains(mousePos) || modifiedVariantText.getGlobalBounds().contains(mousePos))
       version = GameOption::Modified;
     if (firstPlayer1Radio.getGlobalBounds().contains(mousePos) || firstPlayer1Text.getGlobalBounds().contains(mousePos))
       firstPlayer = true;
-    if (firstPlayer2Radio.getGlobalBounds().contains(mousePos) || firstPlayer2Text.getGlobalBounds().contains(mousePos))
+    else if (firstPlayer2Radio.getGlobalBounds().contains(mousePos) || firstPlayer2Text.getGlobalBounds().contains(mousePos))
       firstPlayer = false;
     if (playButton.getGlobalBounds().contains(mousePos))
       return true;

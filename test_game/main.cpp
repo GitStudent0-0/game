@@ -79,7 +79,7 @@ void restartGame(
   GameBoard& board,
   BoardRenderer& renderer,
   std::unique_ptr<GameLogic>& round,
-  std::unique_ptr<Bot>& bot,
+  std::unique_ptr<MinimaxBot>& bot,
   GameEndMode currentMode,
   GameOption currentVersion,
   bool firstPlayer,
@@ -94,9 +94,9 @@ void restartGame(
 
   round = std::make_unique<GameLogic>(board, currentMode, currentVersion);
   if (currentVersion == GameOption::Classical)
-    bot = std::make_unique<Bot>(*round, 3, 3);
+    bot = std::make_unique<MinimaxBot>(*round, 3, 2);
   else
-    bot = std::make_unique<Bot>(*round, 2, 1);
+    bot = std::make_unique<MinimaxBot>(*round, 2, 1);
 
   renderer.init(board, BOARD_RADIUS);
 
@@ -150,7 +150,7 @@ int main()
   setlocale(LC_ALL, "RUS");
   ContextSettings settings;
   settings.antiAliasingLevel = 8;
-  auto window = RenderWindow(VideoMode({ 1400, 980 }), "Window", State::Windowed, settings);
+  auto window = RenderWindow(VideoMode({ 1400, 980 }), "Game", State::Windowed, settings);
   View gameView(FloatRect({ 0.f, 0.f }, { VIRTUAL_WIDTH, VIRTUAL_HEIGHT }));
   window.setView(gameView);
   window.setFramerateLimit(30);
@@ -164,7 +164,7 @@ int main()
   renderer.init(board, BOARD_RADIUS);
 
   std::unique_ptr<GameLogic> round;
-  std::unique_ptr<Bot> bot;
+  std::unique_ptr<MinimaxBot> bot;
 
   PlayerType player1Type = PlayerType::Human;
   PlayerType player2Type = PlayerType::Bot;
@@ -234,9 +234,9 @@ int main()
               currentVersion = menu.getGameVersion();
               round = std::make_unique<GameLogic>(board, selectedMode, currentVersion);
               if (currentVersion == GameOption::Classical)
-                bot = std::make_unique<Bot>(*round, 3, 3);
+                bot = std::make_unique<MinimaxBot>(*round, 3, 2);
               else
-                bot = std::make_unique<Bot>(*round, 2, 1);
+                bot = std::make_unique<MinimaxBot>(*round, 2, 1);
               endBanner.active = false;
               endBanner.shown = false;
               endBanner.message = L"";
@@ -398,7 +398,7 @@ int main()
         botDelayClock.restart();
         botDelayStarted = true;
       }
-      if (botDelayClock.getElapsedTime().asSeconds() >= 0.1f)
+      if (botDelayClock.getElapsedTime().asSeconds() >= 0.01f)
       {
         Move botMove = bot->choiceMove(); 
         if (botMove.a != -1 && botMove.b != -1)
